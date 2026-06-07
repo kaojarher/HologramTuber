@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 全息陪伴 - 終極全功能修正版</title>
+    <script src="https://js.puter.com/v2/"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
@@ -267,16 +268,19 @@
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         let tokenClient;
         let accessToken = null;
-        let isReady = false;
+        let isPuterReady = false;
 
-        // ======================= Anthropic API 初始化 =======================
-        window.addEventListener('DOMContentLoaded', () => {
-            isReady = true;
+        // ======================= 確保 Puter SDK 初始化完成 =======================
+        puter.ready().then(() => {
+            isPuterReady = true;
             const box = document.getElementById('chatBox');
             box.innerHTML = '';
             const initMsg = appendMsg('ai', '', false);
-            typeText(initMsg, "您好！全息同步核心已成功連接至 Claude AI。現在所有的長篇回覆都會乖乖留在此處，並能自由滾動，絕對不會再遮擋立繪囉！試著跟我聊聊吧！", 20);
+            typeText(initMsg, "您好！全息同步核心已成功連接至 Puter AI。現在所有的長篇回覆都會乖乖留在此處，並能自由滾動，絕對不會再遮擋立繪囉！試著跟我聊聊吧！", 20);
             document.getElementById('subtitle').innerText = "全息投影就緒，請對話。";
+        }).catch(err => {
+            console.error("Puter 初始化失敗:", err);
+            document.getElementById('subtitle').innerText = "核心連線異常";
         });
 
         // ======================= 臺灣語音輸入 (STT) =======================
@@ -433,11 +437,8 @@
             }
         }
 
-        // 對話歷史（多輪記憶）
-        const chatHistory = [];
-
         async function send() {
-            if (!isReady) return alert("AI 核心尚未準備就緒，請稍候。");
+            if (!isPuterReady) return alert("Puter AI 核心尚未準備就緒，請稍候。");
             
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -450,25 +451,11 @@
 
             document.getElementById('subtitle').innerText = "系統運算中...";
 
-            const personality = document.getElementById('personality').value;
-            chatHistory.push({ role: "user", content: text });
-
             try {
-                const response = await fetch("https://api.anthropic.com/v1/messages", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: "claude-sonnet-4-20250514",
-                        max_tokens: 1000,
-                        system: `你現在是全息投影虛擬陪伴人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣回答，語氣自然生動。`,
-                        messages: chatHistory
-                    })
-                });
-
-                const data = await response.json();
-                const replyText = data.content?.[0]?.text || "（回應解析失敗）";
-
-                chatHistory.push({ role: "assistant", content: replyText });
+                const personality = document.getElementById('personality').value;
+                const prompt = `你現在是全息投影虛擬陪伴人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣回答，語氣自然生動。使用者說：${text}`;
+                const resp = await puter.ai.chat(prompt);
+                const replyText = resp.toString().trim();
 
                 const aiMsgEl = appendMsg('ai', '', false); 
                 document.getElementById('subtitle').innerText = "投影傳輸中...";
