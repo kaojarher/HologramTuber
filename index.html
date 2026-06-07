@@ -61,32 +61,59 @@
             overflow: hidden;
         }
 
-        /* 全息展示區 */
-        .cabin-section { flex: 0 0 48%; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
+        /* 全息展示區 — 佔55%高度，立繪更大 */
+        .cabin-section { 
+            flex: 0 0 55%; 
+            min-height: 0; 
+            display: flex; 
+            align-items: stretch; 
+            justify-content: center; 
+            padding: 8px 10px 4px; 
+            position: relative; 
+        }
         
         .hologram-cabin {
-            width: 100%; max-width: 250px; height: 95%; background: rgba(30, 41, 59, 0.5);
-            border: 2px solid #334155; border-radius: 24px; display: flex; flex-direction: column;
+            width: 100%; 
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px solid #334155; border-radius: 20px; display: flex; flex-direction: column;
             justify-content: flex-end; align-items: center; position: relative; overflow: hidden;
             box-shadow: inset 0 0 30px var(--holo-glow);
         }
 
+        /* 字幕條：固定在 hologram-cabin 底部，不蓋出去 */
+        .subtitle-bar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.75);
+            border-top: 1px solid var(--accent-cyan);
+            padding: 8px 14px;
+            font-size: 1rem;
+            color: var(--accent-cyan);
+            text-align: center;
+            line-height: 1.4;
+            z-index: 10;
+            min-height: 38px;
+        }
+
         /* 律動與全息特效 */
         .fullbody-display {
-            width: 85%; height: 75%; margin-bottom: 20px; display: flex; align-items: flex-end; justify-content: center;
+            width: 90%; 
+            height: calc(100% - 44px); /* 扣掉字幕條高度 */
+            margin-bottom: 44px; /* 字幕條佔位 */
+            display: flex; align-items: flex-end; justify-content: center;
             position: relative; z-index: 2;
             animation: floatRhythm 4s ease-in-out infinite;
         }
         
         .fullbody-display img {
             max-width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 0 12px var(--accent-cyan));
-            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+            filter: drop-shadow(0 0 14px var(--accent-cyan));
+            mask-image: linear-gradient(to bottom, black 88%, transparent 100%);
         }
 
         .fullbody-display::before {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(34, 211, 238, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(34, 211, 238, 0.08) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
             background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 3;
         }
 
@@ -117,9 +144,21 @@
             overscroll-behavior: contain;
             min-height: 0;
         }
-        .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; }
+        /* 字體放大，適合老花眼 */
+        .msg { padding: 12px 16px; border-radius: 14px; font-size: 1.15rem; max-width: 88%; line-height: 1.7; }
         .msg.user { background: var(--accent-purple); align-self: flex-end; }
         .msg.ai { background: #334155; align-self: flex-start; border-left: 4px solid var(--accent-cyan); }
+
+        /* 打字機游標 */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px; height: 1.1em;
+            background: var(--accent-cyan);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.7s step-end infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
         /* 輸入區（精準釘死在底部） */
         .input-area { 
@@ -134,15 +173,15 @@
             position: relative;
             z-index: 10;
         }
-        input[type="text"] { flex: 1; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 12px; border-radius: 25px; outline: none; font-size: 16px; }
+        input[type="text"] { flex: 1; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 14px 16px; border-radius: 25px; outline: none; font-size: 18px; }
         
         .icon-btn {
-            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            transition: 0.2s; background: #334155; color: white;
+            width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            transition: 0.2s; background: #334155; color: white; flex-shrink: 0;
         }
         .icon-btn.active { background: var(--accent-cyan); animation: pulse 1.5s infinite; }
-        .btn-send { background: var(--accent-cyan); color: #050a16; width: 60px; border-radius: 20px; font-weight: bold; }
+        .btn-send { background: var(--accent-cyan); color: #050a16; width: 70px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; }
 
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 211, 238, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); } }
 
@@ -205,9 +244,8 @@
                     <div class="fullbody-display">
                         <img src="https://via.placeholder.com/200x500/0f172a/22d3ee?text=AI+Hologram" id="displayImg">
                     </div>
-                </div>
-                <div id="subtitle" style="position:absolute; bottom:20px; background:rgba(0,0,0,0.7); padding:5px 15px; border-radius:15px; font-size:0.8rem; color:var(--accent-cyan); border:1px solid var(--accent-cyan); max-width:80%; text-align:center">
-                    我在聽，請說話...
+                    <!-- 字幕條在 cabin 內部底部，不會蓋到對話區 -->
+                    <div id="subtitle" class="subtitle-bar">我在聽，請說話...</div>
                 </div>
             </div>
 
@@ -382,7 +420,7 @@
                 const personality = document.getElementById('personality').value;
                 const res = await puter.ai.chat(`你是${personality}。請用臺灣常用的語氣回答。使用者說：${text}`, {model});
                 
-                appendMsg('ai', res);
+                typewriterMsg('ai', res);
                 document.getElementById('subtitle').innerText = res;
                 speakText(res); 
             } catch (e) {
@@ -397,6 +435,38 @@
             d.innerText = text;
             box.appendChild(d);
             scrollToBottom();
+            return d;
+        }
+
+        // 打字機效果：逐字顯示 AI 回應
+        function typewriterMsg(role, fullText) {
+            const box = document.getElementById('chatBox');
+            const d = document.createElement('div');
+            d.className = `msg ${role}`;
+            
+            // 建立游標元素
+            const cursor = document.createElement('span');
+            cursor.className = 'typing-cursor';
+            d.appendChild(cursor);
+            box.appendChild(d);
+            scrollToBottom();
+
+            let i = 0;
+            const speed = 30; // 每字間隔ms，可調整快慢
+            
+            function type() {
+                if (i < fullText.length) {
+                    // 在游標前插入文字節點
+                    d.insertBefore(document.createTextNode(fullText[i]), cursor);
+                    i++;
+                    scrollToBottom();
+                    setTimeout(type, speed);
+                } else {
+                    // 打完移除游標
+                    cursor.remove();
+                }
+            }
+            type();
             return d;
         }
 
