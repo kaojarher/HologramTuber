@@ -378,7 +378,9 @@
             const data = {
                 image: document.getElementById('displayImg').src,
                 model: document.getElementById('modelSelect').value,
-                personality: document.getElementById('personality').value
+                personality: document.getElementById('personality').value,
+                chatHistory: chatHistory,
+                savedAt: new Date().toISOString()
             };
             const metadata = { name: 'ai_hologram_layout_save.json', mimeType: 'application/json' };
             const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
@@ -392,7 +394,7 @@
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken}),
                     body: form
                 });
-                alert("✅ 配置已成功備份至 Google Drive！");
+                alert(`✅ 配置與對話記憶（${chatHistory.length} 則）已備份至 Google Drive！`);
             } catch (e) { alert("❌ 備份失敗"); }
         }
 
@@ -414,9 +416,31 @@
                 document.getElementById('displayImg').src = config.image;
                 document.getElementById('modelSelect').value = config.model;
                 document.getElementById('personality').value = config.personality;
-                alert("✅ 成功從雲端回復設定！");
+
+                // 還原對話記憶
+                if (config.chatHistory && Array.isArray(config.chatHistory)) {
+                    chatHistory.length = 0;
+                    config.chatHistory.forEach(msg => chatHistory.push(msg));
+
+                    // 在對話框重新渲染歷史訊息
+                    const box = document.getElementById('chatBox');
+                    box.innerHTML = '';
+                    const savedTime = config.savedAt ? new Date(config.savedAt).toLocaleString('zh-TW') : '未知';
+                    const sysMsg = appendMsg('ai', '', false);
+                    sysMsg.style.opacity = '0.6';
+                    sysMsg.style.fontSize = '0.78rem';
+                    sysMsg.textContent = `📂 已還原 ${config.chatHistory.length} 則對話記憶（備份時間：${savedTime}）`;
+
+                    config.chatHistory.forEach(msg => {
+                        if (msg.role === 'user' || msg.role === 'assistant') {
+                            appendMsg(msg.role === 'user' ? 'user' : 'ai', msg.content);
+                        }
+                    });
+                }
+
+                alert(`✅ 成功從雲端還原！已載入 ${chatHistory.length} 則對話記憶。`);
                 closeMenu();
-            } catch (e) { alert("❌ 還原失敗"); }
+            } catch (e) { alert("❌ 還原失敗：" + e.message); }
         }
 
         // ======================= 核心對話與對答邏輯 =======================
@@ -431,6 +455,9 @@
             }
         }
 
+        // 對話歷史記憶（多輪上下文）
+        const chatHistory = [];
+
         async function send() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -443,10 +470,19 @@
 
             document.getElementById('subtitle').innerText = "系統運算中...";
 
+            // 將使用者訊息加入歷史
+            chatHistory.push({ role: 'user', content: text });
+
             try {
                 const personality = document.getElementById('personality').value;
-                const prompt = `你現在是全息投影虛擬陪伴人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣回答，語氣自然生動。使用者說：${text}`;
-                const resp = await puter.ai.chat(prompt);
+                const systemMsg = `你現在是全息投影虛擬陪伴人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣回答，語氣自然生動。`;
+
+                // puter.ai.chat 支援傳入 messages 陣列以保留上下文
+                const messages = [
+                    { role: 'system', content: systemMsg },
+                    ...chatHistory
+                ];
+                const resp = await puter.ai.chat(messages);
 
                 // puter v2 回傳結構：resp.message.content[0].text
                 let replyText = '';
@@ -458,6 +494,9 @@
                     replyText = JSON.stringify(resp);
                 }
                 replyText = replyText.trim();
+
+                // 將 AI 回覆也存入歷史
+                chatHistory.push({ role: 'assistant', content: replyText });
 
                 const aiMsgEl = appendMsg('ai', '', false); 
                 document.getElementById('subtitle').innerText = "投影傳輸中...";
@@ -472,6 +511,8 @@
                 speakText(replyText); 
             } catch (e) {
                 console.error("Puter AI 錯誤:", e);
+                // 發生錯誤時把最後一筆使用者訊息移出，避免歷史汙染
+                chatHistory.pop();
                 const errEl = appendMsg('ai', '', false);
                 errEl.textContent = `連線異常：${e.message || e}`;
                 document.getElementById('subtitle').innerText = "傳輸失敗";
