@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息陪伴 - 大型立繪與打字效果版</title>
+    <title>AI 全息陪伴 - 臺灣語音大型立繪版</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
@@ -31,12 +31,14 @@
 
         .container { display: flex; width: 100%; height: 100%; }
 
-        /* --- 面板設計 --- */
+        /* ======================= 控制設定面板 ======================= */
         .control-panel {
             width: 300px; background-color: var(--panel-bg); border-right: 1px solid #374151;
             padding: 20px; display: flex; flex-direction: column; gap: 15px;
             overflow-y: auto; transition: transform 0.3s ease; z-index: 100;
         }
+
+        h2, h3 { color: var(--accent-cyan); border-bottom: 1px solid #374151; padding-bottom: 5px; font-size: 1rem; }
 
         .backup-card {
             background: linear-gradient(145deg, #1f2937, #111827);
@@ -44,221 +46,262 @@
             display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;
         }
 
-        .main-display { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at center, #111827 0%, #030712 100%); position: relative; height: 100%; }
+        .btn { background: var(--card-bg); border: 1px solid #4b5563; color: #fff; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+        .btn:hover { background: #374151; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border: none; font-weight: bold; color: #fff; }
 
-        /* --- 大型立繪展示區 (RWD 優化) --- */
+        /* ======================= 主顯示區 (垂直分佈) ======================= */
+        .main-display { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; /* 嚴格垂直排列：上為立繪，下為對話 */
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%); 
+            position: relative; 
+            height: 100%; 
+            overflow: hidden;
+        }
+
+        /* 上方：大型立繪展示區 */
         .cabin-section { 
-            flex: 1; /* 自動填滿剩餘空間，讓立繪區域儘量大 */
+            flex: 1; /* 自動撐滿上方剩餘的所有空間，讓立繪最大化 */
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            padding: 10px; 
+            padding: 15px; 
             position: relative; 
-            overflow: hidden;
+            min-height: 0; /* 防止 Flex 項目溢出 */
         }
         
         .hologram-cabin {
             width: 100%; 
-            max-width: 400px; /* 增加最大寬度 */
-            height: 98%; /* 幾乎填滿高度 */
-            background: rgba(31, 41, 55, 0.4);
+            max-width: 450px; /* 加大艙體最大寬度 */
+            height: 100%; 
+            background: rgba(31, 41, 55, 0.3);
             border: 2px solid #374151; border-radius: 24px; display: flex; flex-direction: column;
             justify-content: flex-end; align-items: center; position: relative; overflow: hidden;
             box-shadow: inset 0 0 40px var(--holo-glow);
         }
 
-        /* --- 律動與全息特效 --- */
+        /* 立繪呼吸與浮動律動效果 */
         .fullbody-display {
-            width: 90%; height: 85%; /* 增加高度佔比 */
-            margin-bottom: 10px; display: flex; align-items: flex-end; justify-content: center;
+            width: 100%; height: 90%; 
+            display: flex; align-items: flex-end; justify-content: center;
             position: relative; z-index: 2;
-            animation: floatRhythm 5s ease-in-out infinite; /* 調整律動時間 */
+            animation: floatRhythm 4.5s ease-in-out infinite; 
         }
         
         .fullbody-display img {
             max-width: 100%; height: 100%; object-fit: contain;
             filter: drop-shadow(0 0 15px var(--accent-cyan));
             mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
         }
 
+        /* 全息掃描線濾鏡 */
         .fullbody-display::before {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.08) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
             background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 3;
         }
 
         @keyframes floatRhythm {
             0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
-            50% { transform: translateY(-12px) scale(1.01); filter: brightness(1.2); }
+            50% { transform: translateY(-10px) scale(1.015); filter: brightness(1.18); }
         }
 
-        /* --- 對話區 --- */
+        /* 艙體內部的短動態字幕提示 */
+        #subtitle {
+            position: absolute; bottom: 15px; background: rgba(3, 7, 18, 0.75); 
+            padding: 4px 14px; border-radius: 12px; font-size: 0.75rem; 
+            color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); 
+            max-width: 85%; text-align: center; z-index: 5; pointer-events: none;
+        }
+
+        /* ======================= 下方：獨立對話工作區 ======================= */
         .chat-section { 
-            flex: 0 0 200px; /* 固定高度，為大型立繪騰出空間 */
+            flex: 0 0 32%; /* 固定佔用螢幕總高度的 32%，為上方留出大空間 */
+            min-height: 220px; /* 確保在矮螢幕手機上有適當的高度 */
             display: flex; flex-direction: column; 
-            background: rgba(17, 24, 39, 0.95); border-top: 1px solid #374151; 
+            background: rgba(17, 24, 39, 0.98); 
+            border-top: 2px solid var(--accent-cyan); 
             overflow: hidden; 
+            z-index: 10; /* 確保層級高於立繪區，不被覆蓋 */
         }
-        .chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
-        .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; }
-        .msg.user { background: var(--accent-purple); align-self: flex-end; }
+
+        /* 對話歷史紀錄容器（獨立滾動） */
+        .chat-box { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; word-break: break-all; }
+        .msg.user { background: var(--accent-purple); align-self: flex-end; color: #fff; box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3); }
         .msg.ai { 
-            background: #1f2937; align-self: flex-start; 
+            background: #253047; align-self: flex-start; 
             border-left: 4px solid var(--accent-cyan);
-            min-height: 40px; /* 確保打字時有最小高度 */
+            color: var(--text-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        /* --- 打字效果的 CSS 樣式 --- */
-        .typing {
-            overflow: hidden; /* 確保內容不會溢出 */
-            white-space: pre-wrap; /* 保持換行和空格 */
-        }
+        /* 打字效果的樣式 */
+        .typing { white-space: pre-wrap; }
 
-        /* --- 輸入區與語音按鈕 --- */
+        /* ======================= 底部輸入與語音控制區 ======================= */
         .input-area { 
-            padding: 8px 12px; 
-            padding-bottom: calc(8px + env(safe-area-inset-bottom)); 
+            padding: 10px 15px; 
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
             background: #111827; 
             display: flex; 
-            gap: 6px; 
+            gap: 8px; 
             align-items: center;
             border-top: 1px solid #374151;
             position: relative;
-            z-index: 10;
+            z-index: 12;
         }
-        input[type="text"] { flex: 1; background: #1f2937; border: 1px solid #4b5563; color: #fff; padding: 10px; border-radius: 20px; outline: none; font-size: 16px; }
+
+        input[type="text"] { 
+            flex: 1; background: #1f2937; border: 1px solid #4b5563; 
+            color: #fff; padding: 12px 16px; border-radius: 25px; 
+            outline: none; font-size: 16px; transition: 0.2s;
+        }
+        input[type="text"]:focus { border-color: var(--accent-cyan); background: #253047; }
         
         .icon-btn {
-            width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+            width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
             transition: 0.2s; background: #374151; color: white;
         }
-        .icon-btn.active { background: var(--accent-cyan); animation: pulse 1.5s infinite; }
-        .btn-send { background: var(--accent-cyan); color: #030712; width: 50px; border-radius: 20px; font-weight: bold; }
+        .icon-btn:hover { background: #4b5563; }
+        .icon-btn.active { background: var(--accent-cyan); color: #030712; animation: pulse 1.5s infinite; }
+        .btn-send { background: var(--accent-cyan); color: #030712; width: 60px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
 
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); } 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); } }
 
-        .mobile-toggle { position: absolute; top: 10px; left: 10px; z-index: 200; background: #1f2937; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 8px; border-radius: 8px; font-size: 0.8rem; }
+        .mobile-toggle { position: absolute; top: 10px; left: 10px; z-index: 200; background: #1f2937; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
 
-        /* 手機版的立繪區域優化 */
+        /* 行動裝置側邊欄適配 */
         @media (max-width: 768px) {
             .control-panel { position: absolute; transform: translateX(-100%); height: 100%; width: 280px; }
             .control-panel.open { transform: translateX(0); }
-            .cabin-section { padding: 5px; }
-            .hologram-cabin { max-width: 320px; } /* 手機上略微縮小 */
-            .chat-section { flex: 0 0 180px; } /* 手機上對話區更小 */
+            .hologram-cabin { max-width: 100%; } 
+            .chat-section { flex: 0 0 38%; } /* 在手機上稍微增加對話視窗比例，方便閱讀長文本 */
         }
     </style>
 </head>
 <body>
 
-    <button class="mobile-toggle" onclick="toggleMenu()" id="menuBtn">⚙️ 定制</button>
+    <button class="mobile-toggle" onclick="toggleMenu()" id="menuBtn">⚙️ 控制台</button>
 
     <div class="container">
         <div class="control-panel" id="panel">
-            <h2 style="margin-top:35px">全息備存中心</h2>
+            <h2 style="margin-top:40px">全息備存中心</h2>
             
             <div class="backup-card">
-                <p>☁️ Google Drive 備份</p>
-                <button class="btn" onclick="handleAuth()" style="padding:5px; cursor:pointer">1. 帳號授權</button>
-                <button class="btn" onclick="saveToDrive()" style="padding:5px; cursor:pointer">2. 匯出備份</button>
-                <button class="btn" onclick="loadFromDrive()" style="padding:5px; cursor:pointer">3. 匯入備份</button>
-                <div id="authStatus" style="font-size:0.7rem; text-align:center">未連線</div>
+                <p style="font-weight: bold; color: var(--accent-cyan)">☁️ Google Drive 備份</p>
+                <button class="btn btn-primary" onclick="handleAuth()">1. 帳號授權</button>
+                <button class="btn" onclick="saveToDrive()">2. 匯出配置到雲端</button>
+                <button class="btn" onclick="loadFromDrive()">3. 從雲端匯入還原</button>
+                <div id="authStatus" style="font-size:0.7rem; text-align:center; color:#9ca3af">狀態：未連線</div>
             </div>
 
-            <div class="section" style="margin-top:10px">
-                <h3>大型形象律動</h3>
-                <p style="font-size:0.7rem; color:#888;">請上傳直式全身高解析圖片。</p>
-                <label class="btn" style="display:block; text-align:center; cursor:pointer; background:#374151; padding:10px; border-radius:8px">
-                    📸 上傳形象照
+            <div class="section">
+                <h3>形象設定</h3>
+                <label class="btn" style="display:block; text-align:center; cursor:pointer; background:#374151; padding:10px; border-radius:8px; margin-top:5px;">
+                    📸 上傳全身立繪
                     <input type="file" style="display:none" accept="image/*" onchange="handleImg(this)">
                 </label>
             </div>
 
             <div class="section">
-                <h3>打字與語音</h3>
-                <div style="font-size:0.8rem; display:flex; justify-content:space-between; align-items:center">
-                    <span>打字顯示回覆</span>
+                <h3>互動模式</h3>
+                <div style="font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span>動態打字效果</span>
                     <input type="checkbox" id="useTypingEffect" checked>
                 </div>
-                <div style="font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                    <span>自動朗讀回覆</span>
+                <div style="font-size:0.85rem; display:flex; justify-content:space-between; align-items:center">
+                    <span>臺灣語音朗讀</span>
                     <input type="checkbox" id="autoSpeech" checked>
                 </div>
             </div>
 
             <div class="section">
-                <h3>陪伴參數</h3>
+                <h3>模型與性格</h3>
                 <select id="modelSelect" style="width:100%; padding:8px; border-radius:5px; background:#1f2937; color:white; border:1px solid #4b5563;">
-                    <option value="gpt-4o">GPT-4o (推薦)</option>
+                    <option value="gpt-4o">GPT-4o (核心推薦)</option>
                     <option value="claude-3-5-sonnet">Claude 3.5</option>
                 </select>
                 <select id="personality" style="width:100%; padding:8px; border-radius:5px; background:#1f2937; color:white; margin-top:5px; border:1px solid #4b5563;">
-                    <option value="溫柔、有耐心的臺灣語音">溫柔體貼</option>
-                    <option value="幽默、喜歡開玩笑的摯友語音">幽默風趣</option>
+                    <option value="溫柔體貼、愛關心人的臺灣女生">溫柔體貼 (TW)</option>
+                    <option value="幽默風趣、講話帶點乾醋的臺灣死黨">幽默風趣 (TW)</option>
                 </select>
             </div>
         </div>
 
         <div class="main-display" onclick="closeMenu()">
+            
             <div class="cabin-section">
                 <div class="hologram-cabin">
                     <div class="fullbody-display">
-                        <img src="https://via.placeholder.com/300x700/111827/06b6d4?text=AI+Hologram" id="displayImg">
+                        <img src="https://via.placeholder.com/350x750/111827/06b6d4?text=AI+Hologram" id="displayImg">
                     </div>
                 </div>
-                <div id="subtitle" style="position:absolute; bottom:15px; background:rgba(0,0,0,0.7); padding:5px 15px; border-radius:15px; font-size:0.8rem; color:var(--accent-cyan); border:1px solid var(--accent-cyan); max-width:80%; text-align:center">
-                    我在聽，請說話...
-                </div>
+                <div id="subtitle">全息投影就緒，請對話。</div>
             </div>
 
             <div class="chat-section">
                 <div class="chat-box" id="chatBox">
-                    <div class="msg ai typing">您好！我已優化介面。現在「立繪展示區」更為寬廣，且我的回覆將呈現動態的打字效果，讓對話更有律動感。試試用語音與我聊天吧！</div>
+                    <div class="msg ai typing">您好！介面已全新重構。現在「長篇回覆文字」將會整齊地出現在此區，並具備滾動條，絕不溢出或遮擋上方的立繪。試試看跟我聊天吧！</div>
                 </div>
+                
                 <div class="input-area">
-                    <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="語音輸入">🎤</button>
-                    <input type="text" id="userInput" placeholder="輸入訊息..." onkeypress="if(event.key==='Enter')send()">
+                    <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="臺灣話語音輸入">🎤</button>
+                    <input type="text" id="userInput" placeholder="請輸入訊息或語音..." onkeypress="if(event.key==='Enter')send()">
                     <button class="icon-btn btn-send" onclick="send()">發送</button>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script>
-        // ======================= 認證資訊 =======================
+        // ======================= 認證與 Google API 設定 =======================
         const CLIENT_ID = '375971288943-097rhbub5h2d06f1g5lqs60in6pofj22.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
         let tokenClient;
         let accessToken = null;
 
-        // ======================= 語音功能 (STT/TTS) =======================
+        // ======================= 臺灣語音輸入 (STT) =======================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let isListening = false;
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
-            recognition.lang = 'zh-TW';
+            recognition.lang = 'zh-TW'; // 精準鎖定臺灣口音
             recognition.interimResults = false;
             recognition.continuous = false;
 
             recognition.onresult = (event) => {
                 const text = event.results[0][0].transcript;
                 document.getElementById('userInput').value = text;
-                send(); 
+                send(); // 辨識成功自動送出對話
             };
 
             recognition.onend = () => {
                 isListening = false;
                 document.getElementById('voiceBtn').classList.remove('active');
-                fixViewportScroll(); 
+                fixViewportScroll(); // 防鍵盤拉扯
             };
         }
 
         function toggleVoice() {
-            if (!recognition) return alert("您的瀏覽器不支援語音辨識");
+            if (!recognition) return alert("您的設備或瀏覽器不支援 Web Speech API 語音辨識");
             if (isListening) {
                 recognition.stop();
             } else {
@@ -268,19 +311,27 @@
             }
         }
 
+        // ======================= 臺灣語音輸出 (TTS) =======================
         function speakText(text) {
             if (!document.getElementById('autoSpeech').checked) return;
-            window.speechSynthesis.cancel(); 
-            const msg = new SpeechSynthesisUtterance();
-            msg.text = text;
+            window.speechSynthesis.cancel(); // 清除排隊語音防止重疊
+            
+            // 移除 markdown 標籤格式以優化朗讀體驗
+            const cleanText = text.replace(/[\*#`_\-]/g, '');
+            const msg = new SpeechSynthesisUtterance(cleanText);
             msg.lang = 'zh-TW';
             msg.rate = 1.0;
+            
+            // 嘗試篩選系統中的臺灣本地女聲
+            const voices = window.speechSynthesis.getVoices();
+            const twVoice = voices.find(v => v.lang.includes('zh-TW') || v.name.includes('Hanhan') || v.name.includes('Yating'));
+            if (twVoice) msg.voice = twVoice;
+            
             window.speechSynthesis.speak(msg);
         }
 
-        // ======================= 打字效果的核心邏輯 =======================
-        function typeText(element, text, delay = 50) {
-            // 清空原本的文字，開始打字
+        // ======================= 打字效果邏輯 =======================
+        function typeText(element, text, delay = 35) {
             element.textContent = '';
             let index = 0;
 
@@ -288,59 +339,53 @@
                 if (index < text.length) {
                     element.textContent += text.charAt(index);
                     index++;
-                    // 對話框自動置底
-                    scrollToBottom();
+                    scrollToBottom(); // 打字時對話區即時跟隨滾動
                     setTimeout(typeNextChar, delay);
                 } else {
-                    // 打字結束，移除打字狀態標記（如果有的話）
                     element.classList.remove('typing');
                 }
             }
-            
-            // 開始打字並加上狀態標記
             element.classList.add('typing');
             typeNextChar();
         }
 
-        // ======================= 視口修正 =======================
+        // ======================= 行動端防劇烈震盪修正 =======================
         function fixViewportScroll() {
             window.scrollTo(0, 0);
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 100);
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 250);
+            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 120);
+            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 280);
         }
 
-        // ======================= Google Drive 功能 =======================
+        // ======================= Google Drive 備份與匯入功能 =======================
         window.onload = () => {
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: (res) => {
                     accessToken = res.access_token;
-                    document.getElementById('authStatus').innerText = "✅ 已授權";
+                    document.getElementById('authStatus').innerText = "✅ 雲端連線成功";
                     document.getElementById('authStatus').style.color = "#06b6d4";
                 },
             });
-            // 初始化 TTS，避免疊音
-            window.speechSynthesis.cancel();
-            
-            // 由於打字效果會影響第一個預設回覆，我們手動執行它
-            const firstAiMsgDiv = document.querySelector('.msg.ai.typing');
-            if (firstAiMsgDiv && document.getElementById('useTypingEffect').checked) {
-                const text = firstAiMsgDiv.textContent;
-                typeText(firstAiMsgDiv, text);
+            window.speechSynthesis.getVoices(); // 預載語音引擎
+
+            // 初始化第一個預設對話的打字效果
+            const initAiBox = document.querySelector('.msg.ai.typing');
+            if (initAiBox) {
+                typeText(initAiBox, initAiBox.textContent, 25);
             }
         };
 
         function handleAuth() { tokenClient.requestAccessToken({prompt: 'consent'}); }
 
         async function saveToDrive() {
-            if (!accessToken) return alert("請先授權");
+            if (!accessToken) return alert("請先完成帳號授權連線");
             const data = {
                 image: document.getElementById('displayImg').src,
                 model: document.getElementById('modelSelect').value,
                 personality: document.getElementById('personality').value
             };
-            const metadata = { name: 'ai_hologram_tw_save_large.json', mimeType: 'application/json' };
+            const metadata = { name: 'ai_hologram_layout_save.json', mimeType: 'application/json' };
             const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
             const form = new FormData();
             form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
@@ -352,35 +397,42 @@
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken}),
                     body: form
                 });
-                alert("雲端備份成功！");
-            } catch (e) { alert("備份失敗"); }
+                alert("✅ 核心參數與立繪已成功打包上傳至 Google Drive 根目錄！");
+            } catch (e) { alert("❌ 雲端備份失敗"); }
         }
 
         async function loadFromDrive() {
-            if (!accessToken) return alert("請先授權");
+            if (!accessToken) return alert("請先完成帳號授權連線");
             try {
-                const search = await fetch('https://www.googleapis.com/drive/v3/files?q=name="ai_hologram_tw_save_large.json"&orderBy=createdTime desc', {
+                const search = await fetch('https://www.googleapis.com/drive/v3/files?q=name="ai_hologram_layout_save.json"&orderBy=createdTime desc', {
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken})
                 });
                 const list = await search.json();
-                if (list.files.length === 0) return alert("找不到備份");
+                if (list.files.length === 0) return alert("在您的雲端硬碟中找不到相符的備份檔案。");
+                
                 const fileId = list.files[0].id;
                 const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken})
                 });
                 const config = await fileRes.json();
+                
+                // 還原環境資料
                 document.getElementById('displayImg').src = config.image;
                 document.getElementById('modelSelect').value = config.model;
                 document.getElementById('personality').value = config.personality;
-                alert("備份還原成功！");
-            } catch (e) { alert("匯入失敗"); }
+                alert("✅ 成功從雲端下載並同步還原您的個人設定檔與立繪！");
+                closeMenu();
+            } catch (e) { alert("❌ 還原失敗"); }
         }
 
-        // ======================= 核心對話邏輯 =======================
+        // ======================= 核心對話與基礎互動邏輯 =======================
         function handleImg(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = e => document.getElementById('displayImg').src = e.target.result;
+                reader.onload = e => {
+                    document.getElementById('displayImg').src = e.target.result;
+                    document.getElementById('subtitle').innerText = "動態形象載入完畢";
+                };
                 reader.readAsDataURL(input.files[0]);
             }
         }
@@ -390,36 +442,39 @@
             const text = input.value.trim();
             if (!text) return;
 
+            // 1. 推送使用者訊息到下方獨立區
             appendMsg('user', text);
             input.value = '';
             input.blur(); 
             fixViewportScroll();
 
-            document.getElementById('subtitle').innerText = "思考中...";
+            document.getElementById('subtitle').innerText = "系統運算中...";
 
             try {
                 const model = document.getElementById('modelSelect').value;
                 const personality = document.getElementById('personality').value;
-                const res = await puter.ai.chat(`你是${personality}。請用臺灣口音回答。使用者說：${text}`, {model});
                 
-                // 獲取回覆框元素
-                const aiMsgEl = appendMsg('ai', res, false); // false 表示先不顯示文字
-                document.getElementById('subtitle').innerText = res;
+                // 呼叫 Puter API 進行本土化情境對話
+                const res = await puter.ai.chat(`你現在扮演全息投影人物，性格特質是：${personality}。請完全使用臺灣口音、語氣與慣用語（例如：對啊、真的假的、太誇張了吧）來詳細回答。使用者說：${text}`, {model});
+                
+                // 2. 在下方對話區建立空白 AI 對話盒
+                const aiMsgEl = appendMsg('ai', '', false); 
+                document.getElementById('subtitle').innerText = "投影傳輸中...";
 
-                // 根據設定執行打字效果或直接朗讀
+                // 3. 處理打字效果與語音輸出
                 if (document.getElementById('useTypingEffect').checked) {
-                    typeText(aiMsgEl, res, 40); // 調整打字速度
+                    typeText(aiMsgEl, res, 30);
                 } else {
                     aiMsgEl.textContent = res;
+                    scrollToBottom();
                 }
 
                 speakText(res); 
             } catch (e) {
-                appendMsg('ai', '連線異常，請稍後再試。');
+                appendMsg('ai', '系統量子連線異常，請重新再試。');
             }
         }
 
-        // 用於打字效果的 appendMsg 版本：可以選擇不立即填入文字
         function appendMsg(role, text, setText = true) {
             const box = document.getElementById('chatBox');
             const d = document.createElement('div');
@@ -438,6 +493,7 @@
         function toggleMenu() { document.getElementById('panel').classList.toggle('open'); }
         function closeMenu() { document.getElementById('panel').classList.remove('open'); }
 
+        // 行動裝置動態可視範圍彈性拉伸監聽
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
                 document.body.style.height = window.visualViewport.height + 'px';
