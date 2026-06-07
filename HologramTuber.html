@@ -21,13 +21,19 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", system-ui, sans-serif; }
         
         /* 核心防抖動高度設定 */
-        html, body { 
+        html { 
             height: 100%; 
-            height: 100dvh; 
+            background-color: var(--bg-color);
+        }
+        body { 
+            height: 100%; 
             background-color: var(--bg-color); 
             color: var(--text-color); 
             overflow: hidden;
-            position: relative;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
         }
 
         .container { display: flex; width: 100%; height: 100%; }
@@ -45,10 +51,18 @@
             display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;
         }
 
-        .main-display { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at center, #0f172a 0%, #050a16 100%); position: relative; height: 100%; }
+        .main-display { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: radial-gradient(circle at center, #0f172a 0%, #050a16 100%); 
+            position: relative; 
+            min-height: 0;
+            overflow: hidden;
+        }
 
         /* 全息展示區 */
-        .cabin-section { flex: 0 0 48%; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
+        .cabin-section { flex: 0 0 48%; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
         
         .hologram-cabin {
             width: 100%; max-width: 250px; height: 95%; background: rgba(30, 41, 59, 0.5);
@@ -82,14 +96,34 @@
         }
 
         /* 對話區 */
-        .chat-section { flex: 1; display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.9); border-top: 1px solid #334155; overflow: hidden; }
-        .chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+        .chat-section { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: rgba(15, 23, 42, 0.9); 
+            border-top: 1px solid #334155; 
+            overflow: hidden;
+            min-height: 0;
+        }
+        .chat-box { 
+            flex: 1; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            min-height: 0;
+        }
         .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; }
         .msg.user { background: var(--accent-purple); align-self: flex-end; }
         .msg.ai { background: #334155; align-self: flex-start; border-left: 4px solid var(--accent-cyan); }
 
         /* 輸入區（精準釘死在底部） */
         .input-area { 
+            flex-shrink: 0;
             padding: 10px 15px; 
             padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
             background: #0f172a; 
@@ -248,12 +282,17 @@
 
         // ======================= 強效網頁位置修正 (核心修正點) =======================
         function fixViewportScroll() {
-            // 強制瀏覽器視窗滾動回原點，防止被虛擬鍵盤/語音面板拉走
             window.scrollTo(0, 0);
-            
-            // 針對部分手機系統有延遲收合的情況，進行多重時間差追蹤修正
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 100);
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 250);
+            setTimeout(() => { 
+                window.scrollTo(0, 0); 
+                updateViewportHeight();
+                scrollToBottom(); 
+            }, 150);
+            setTimeout(() => { 
+                window.scrollTo(0, 0); 
+                updateViewportHeight();
+                scrollToBottom(); 
+            }, 350);
         }
 
         // ======================= Google Drive 功能 =======================
@@ -370,18 +409,24 @@
         function closeMenu() { document.getElementById('panel').classList.remove('open'); }
 
         // 行動端視口精準動態監聽
+        // 使用 visualViewport 精準取得鍵盤彈出後的真實可用高度
+        function updateViewportHeight() {
+            const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.querySelector('.container').style.height = vh + 'px';
+            scrollToBottom();
+        }
+
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
-                document.body.style.height = window.visualViewport.height + 'px';
-                scrollToBottom();
-            });
+            window.visualViewport.addEventListener('resize', updateViewportHeight);
             window.visualViewport.addEventListener('scroll', () => {
-                // 如果手機系統試圖將視窗拉偏，一律強制歸零
-                if(window.visualViewport.offsetTop > 0){
-                    window.scrollTo(0,0);
-                }
+                // 防止瀏覽器將視窗拉偏
+                window.scrollTo(0, 0);
             });
         }
+
+        // 初始化高度
+        updateViewportHeight();
+        window.addEventListener('resize', updateViewportHeight);
     </script>
 </body>
 </html>
