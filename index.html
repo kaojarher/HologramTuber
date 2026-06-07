@@ -447,7 +447,17 @@
                 const personality = document.getElementById('personality').value;
                 const prompt = `你現在是全息投影虛擬陪伴人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣回答，語氣自然生動。使用者說：${text}`;
                 const resp = await puter.ai.chat(prompt);
-                const replyText = resp.toString().trim();
+
+                // puter v2 回傳結構：resp.message.content[0].text
+                let replyText = '';
+                if (resp && resp.message && resp.message.content && resp.message.content[0]) {
+                    replyText = resp.message.content[0].text || '';
+                } else if (typeof resp === 'string') {
+                    replyText = resp;
+                } else {
+                    replyText = JSON.stringify(resp);
+                }
+                replyText = replyText.trim();
 
                 const aiMsgEl = appendMsg('ai', '', false); 
                 document.getElementById('subtitle').innerText = "投影傳輸中...";
@@ -461,9 +471,9 @@
 
                 speakText(replyText); 
             } catch (e) {
-                console.error(e);
+                console.error("Puter AI 錯誤:", e);
                 const errEl = appendMsg('ai', '', false);
-                errEl.textContent = '系統連線異常，請重新再試。';
+                errEl.textContent = `連線異常：${e.message || e}`;
                 document.getElementById('subtitle').innerText = "傳輸失敗";
             }
         }
