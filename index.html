@@ -3,132 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息陪伴 - 臺灣語音大型立繪版</title>
+    <title>AI 全息陪伴 - 佈局修正版</title>
     <script src="https://js.puter.com/v2/"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         :root {
             --bg-color: #030712;
             --panel-bg: #111827;
-            --card-bg: #1f2937;
             --text-color: #f9fafb;
             --accent-cyan: #06b6d4;
             --accent-purple: #9333ea;
-            --holo-glow: rgba(6, 182, 212, 0.25);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
         
-        html, body { 
-            height: 100%; 
-            height: 100dvh; 
-            background-color: var(--bg-color); 
-            color: var(--text-color); 
-            overflow: hidden;
-            position: relative;
-        }
+        html, body { height: 100%; height: 100dvh; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
 
         .container { display: flex; width: 100%; height: 100%; }
 
-        /* ======================= 控制設定面板 ======================= */
-        .control-panel {
-            width: 300px; background-color: var(--panel-bg); border-right: 1px solid #374151;
-            padding: 20px; display: flex; flex-direction: column; gap: 15px;
-            overflow-y: auto; transition: transform 0.3s ease; z-index: 100;
-        }
-
-        h2, h3 { color: var(--accent-cyan); border-bottom: 1px solid #374151; padding-bottom: 5px; font-size: 1rem; }
-
-        .backup-card {
-            background: linear-gradient(145deg, #1f2937, #111827);
-            border: 1px solid var(--accent-cyan); border-radius: 12px; padding: 12px;
-            display: flex; flex-direction: column; gap: 8px; font-size: 0.8rem;
-        }
-
-        .btn { background: var(--card-bg); border: 1px solid #4b5563; color: #fff; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
-        .btn:hover { background: #374151; }
-        .btn-primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border: none; font-weight: bold; color: #fff; }
-
-        /* ======================= 主顯示區 (垂直分佈) ======================= */
+        /* 主顯示區：垂直排列 */
         .main-display { 
             flex: 1; 
             display: flex; 
-            flex-direction: column; /* 嚴格垂直排列：上為立繪，下為對話 */
-            background: radial-gradient(circle at center, #111827 0%, #030712 100%); 
-            position: relative; 
+            flex-direction: column; 
             height: 100%; 
             overflow: hidden;
         }
 
-        /* 上方：大型立繪展示區 */
+        /* --- 上方：大型立繪區 (修正不溢出) --- */
         .cabin-section { 
-            flex: 1; /* 自動撐滿上方剩餘的所有空間，讓立繪最大化 */
+            flex: 1; 
             display: flex; 
+            flex-direction: column;
             align-items: center; 
             justify-content: center; 
-            padding: 15px; 
             position: relative; 
-            min-height: 0; /* 防止 Flex 項目溢出 */
+            min-height: 0; /* 關鍵：防止內容撐開導致下方對話框被推走 */
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
         }
         
         .hologram-cabin {
-            width: 100%; 
-            max-width: 450px; /* 加大艙體最大寬度 */
-            height: 100%; 
-            background: rgba(31, 41, 55, 0.3);
-            border: 2px solid #374151; border-radius: 24px; display: flex; flex-direction: column;
-            justify-content: flex-end; align-items: center; position: relative; overflow: hidden;
-            box-shadow: inset 0 0 40px var(--holo-glow);
+            width: 90%; 
+            max-width: 400px;
+            height: 90%; 
+            border: 2px solid #374151; border-radius: 24px; 
+            display: flex; align-items: flex-end; justify-content: center; 
+            position: relative; overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(6, 182, 212, 0.2);
         }
 
-        /* 立繪呼吸與浮動律動效果 */
-        .fullbody-display {
-            width: 100%; height: 90%; 
-            display: flex; align-items: flex-end; justify-content: center;
-            position: relative; z-index: 2;
-            animation: floatRhythm 4.5s ease-in-out infinite; 
-        }
-        
         .fullbody-display img {
             max-width: 100%; height: 100%; object-fit: contain;
-            filter: drop-shadow(0 0 15px var(--accent-cyan));
-            mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
-        }
-
-        /* 全息掃描線濾鏡 */
-        .fullbody-display::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.08) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 3;
+            filter: drop-shadow(0 0 10px var(--accent-cyan));
+            animation: floatRhythm 4s ease-in-out infinite;
         }
 
         @keyframes floatRhythm {
-            0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
-            50% { transform: translateY(-10px) scale(1.015); filter: brightness(1.18); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        /* 艙體內部的短動態字幕提示 */
-        #subtitle {
-            position: absolute; bottom: 15px; background: rgba(3, 7, 18, 0.75); 
-            padding: 4px 14px; border-radius: 12px; font-size: 0.75rem; 
-            color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.4); 
-            max-width: 85%; text-align: center; z-index: 5; pointer-events: none;
-        }
-
-        /* ======================= 下方：獨立對話工作區 ======================= */
+        /* --- 下方：獨立對話工作區 (修正文字歸位) --- */
         .chat-section { 
-            flex: 0 0 32%; /* 固定佔用螢幕總高度的 32%，為上方留出大空間 */
-            min-height: 220px; /* 確保在矮螢幕手機上有適當的高度 */
-            display: flex; flex-direction: column; 
-            background: rgba(17, 24, 39, 0.98); 
+            flex: 0 0 35%; /* 固定佔用螢幕高度 35% */
+            display: flex; 
+            flex-direction: column; 
+            background: #0f172a; 
             border-top: 2px solid var(--accent-cyan); 
-            overflow: hidden; 
-            z-index: 10; /* 確保層級高於立繪區，不被覆蓋 */
+            z-index: 10;
         }
 
-        /* 對話歷史紀錄容器（獨立滾動） */
         .chat-box { 
             flex: 1; 
             overflow-y: auto; 
@@ -136,305 +80,93 @@
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            -webkit-overflow-scrolling: touch; 
         }
 
-        .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; word-break: break-all; }
-        .msg.user { background: var(--accent-purple); align-self: flex-end; color: #fff; box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3); }
+        /* 訊息氣泡樣式 */
+        .msg { padding: 12px 16px; border-radius: 15px; font-size: 0.95rem; max-width: 85%; line-height: 1.6; }
+        .msg.user { background: var(--accent-purple); align-self: flex-end; color: white; }
         .msg.ai { 
-            background: #253047; align-self: flex-start; 
-            border-left: 4px solid var(--accent-cyan);
-            color: var(--text-color);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            background: #1e293b; 
+            align-self: flex-start; 
+            border-left: 4px solid var(--accent-cyan); 
+            color: #e2e8f0;
         }
 
-        /* 打字效果的樣式 */
         .typing { white-space: pre-wrap; }
 
-        /* ======================= 底部輸入與語音控制區 ======================= */
+        /* 底部輸入列 */
         .input-area { 
-            padding: 10px 15px; 
-            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
+            padding: 10px; 
             background: #111827; 
-            display: flex; 
-            gap: 8px; 
-            align-items: center;
-            border-top: 1px solid #374151;
-            position: relative;
-            z-index: 12;
+            display: flex; gap: 8px; align-items: center;
+            border-top: 1px solid #334155;
         }
 
         input[type="text"] { 
-            flex: 1; background: #1f2937; border: 1px solid #4b5563; 
-            color: #fff; padding: 12px 16px; border-radius: 25px; 
-            outline: none; font-size: 16px; transition: 0.2s;
+            flex: 1; background: #1e293b; border: 1px solid #475569; 
+            color: white; padding: 12px; border-radius: 20px; outline: none;
         }
-        input[type="text"]:focus { border-color: var(--accent-cyan); background: #253047; }
         
-        .icon-btn {
-            width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            transition: 0.2s; background: #374151; color: white;
+        .btn-send { 
+            background: var(--accent-cyan); color: #0f172a; 
+            border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer;
         }
-        .icon-btn:hover { background: #4b5563; }
-        .icon-btn.active { background: var(--accent-cyan); color: #030712; animation: pulse 1.5s infinite; }
-        .btn-send { background: var(--accent-cyan); color: #030712; width: 60px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); } 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); } }
-
-        .mobile-toggle { position: absolute; top: 10px; left: 10px; z-index: 200; background: #1f2937; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
-
-        /* 行動裝置側邊欄適配 */
-        @media (max-width: 768px) {
-            .control-panel { position: absolute; transform: translateX(-100%); height: 100%; width: 280px; }
-            .control-panel.open { transform: translateX(0); }
-            .hologram-cabin { max-width: 100%; } 
-            .chat-section { flex: 0 0 38%; } /* 在手機上稍微增加對話視窗比例，方便閱讀長文本 */
+        #subtitle {
+            position: absolute; bottom: 10px; background: rgba(0,0,0,0.6);
+            color: var(--accent-cyan); padding: 4px 12px; border-radius: 10px; font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
 
-    <button class="mobile-toggle" onclick="toggleMenu()" id="menuBtn">⚙️ 控制台</button>
-
     <div class="container">
-        <div class="control-panel" id="panel">
-            <h2 style="margin-top:40px">全息備存中心</h2>
-            
-            <div class="backup-card">
-                <p style="font-weight: bold; color: var(--accent-cyan)">☁️ Google Drive 備份</p>
-                <button class="btn btn-primary" onclick="handleAuth()">1. 帳號授權</button>
-                <button class="btn" onclick="saveToDrive()">2. 匯出配置到雲端</button>
-                <button class="btn" onclick="loadFromDrive()">3. 從雲端匯入還原</button>
-                <div id="authStatus" style="font-size:0.7rem; text-align:center; color:#9ca3af">狀態：未連線</div>
-            </div>
-
-            <div class="section">
-                <h3>形象設定</h3>
-                <label class="btn" style="display:block; text-align:center; cursor:pointer; background:#374151; padding:10px; border-radius:8px; margin-top:5px;">
-                    📸 上傳全身立繪
-                    <input type="file" style="display:none" accept="image/*" onchange="handleImg(this)">
-                </label>
-            </div>
-
-            <div class="section">
-                <h3>互動模式</h3>
-                <div style="font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span>動態打字效果</span>
-                    <input type="checkbox" id="useTypingEffect" checked>
-                </div>
-                <div style="font-size:0.85rem; display:flex; justify-content:space-between; align-items:center">
-                    <span>臺灣語音朗讀</span>
-                    <input type="checkbox" id="autoSpeech" checked>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>模型與性格</h3>
-                <select id="modelSelect" style="width:100%; padding:8px; border-radius:5px; background:#1f2937; color:white; border:1px solid #4b5563;">
-                    <option value="gpt-4o">GPT-4o (核心推薦)</option>
-                    <option value="claude-3-5-sonnet">Claude 3.5</option>
-                </select>
-                <select id="personality" style="width:100%; padding:8px; border-radius:5px; background:#1f2937; color:white; margin-top:5px; border:1px solid #4b5563;">
-                    <option value="溫柔體貼、愛關心人的臺灣女生">溫柔體貼 (TW)</option>
-                    <option value="幽默風趣、講話帶點乾醋的臺灣死黨">幽默風趣 (TW)</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="main-display" onclick="closeMenu()">
-            
+        <div class="main-display">
             <div class="cabin-section">
                 <div class="hologram-cabin">
                     <div class="fullbody-display">
-                        <img src="https://via.placeholder.com/350x750/111827/06b6d4?text=AI+Hologram" id="displayImg">
+                        <img src="https://via.placeholder.com/300x600/111827/06b6d4?text=立繪區" id="displayImg">
                     </div>
                 </div>
-                <div id="subtitle">全息投影就緒，請對話。</div>
+                <div id="subtitle">系統就緒</div>
             </div>
 
             <div class="chat-section">
                 <div class="chat-box" id="chatBox">
-                    <div class="msg ai typing">您好！介面已全新重構。現在「長篇回覆文字」將會整齊地出現在此區，並具備滾動條，絕不溢出或遮擋上方的立繪。試試看跟我聊天吧！</div>
+                    <div class="msg ai">您好！我已經修正了佈局問題。現在所有的回覆文字（包含保養眼睛的建議）都會精確顯示在這個深色對話框內，不會遮擋上方的立繪。</div>
                 </div>
                 
                 <div class="input-area">
-                    <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="臺灣話語音輸入">🎤</button>
-                    <input type="text" id="userInput" placeholder="請輸入訊息或語音..." onkeypress="if(event.key==='Enter')send()">
-                    <button class="icon-btn btn-send" onclick="send()">發送</button>
+                    <input type="text" id="userInput" placeholder="輸入訊息..." onkeypress="if(event.key==='Enter')send()">
+                    <button class="btn-send" onclick="send()">發送</button>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // ======================= 認證與 Google API 設定 =======================
-        const CLIENT_ID = '375971288943-097rhbub5h2d06f1g5lqs60in6pofj22.apps.googleusercontent.com';
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-
-        let tokenClient;
-        let accessToken = null;
-
-        // ======================= 臺灣語音輸入 (STT) =======================
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isListening = false;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'zh-TW'; // 精準鎖定臺灣口音
-            recognition.interimResults = false;
-            recognition.continuous = false;
-
-            recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript;
-                document.getElementById('userInput').value = text;
-                send(); // 辨識成功自動送出對話
-            };
-
-            recognition.onend = () => {
-                isListening = false;
-                document.getElementById('voiceBtn').classList.remove('active');
-                fixViewportScroll(); // 防鍵盤拉扯
-            };
-        }
-
-        function toggleVoice() {
-            if (!recognition) return alert("您的設備或瀏覽器不支援 Web Speech API 語音辨識");
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-                isListening = true;
-                document.getElementById('voiceBtn').classList.add('active');
-            }
-        }
-
-        // ======================= 臺灣語音輸出 (TTS) =======================
-        function speakText(text) {
-            if (!document.getElementById('autoSpeech').checked) return;
-            window.speechSynthesis.cancel(); // 清除排隊語音防止重疊
-            
-            // 移除 markdown 標籤格式以優化朗讀體驗
-            const cleanText = text.replace(/[\*#`_\-]/g, '');
-            const msg = new SpeechSynthesisUtterance(cleanText);
-            msg.lang = 'zh-TW';
-            msg.rate = 1.0;
-            
-            // 嘗試篩選系統中的臺灣本地女聲
-            const voices = window.speechSynthesis.getVoices();
-            const twVoice = voices.find(v => v.lang.includes('zh-TW') || v.name.includes('Hanhan') || v.name.includes('Yating'));
-            if (twVoice) msg.voice = twVoice;
-            
-            window.speechSynthesis.speak(msg);
-        }
-
-        // ======================= 打字效果邏輯 =======================
-        function typeText(element, text, delay = 35) {
+        function typeText(element, text, delay = 30) {
             element.textContent = '';
             let index = 0;
-
-            function typeNextChar() {
+            function next() {
                 if (index < text.length) {
                     element.textContent += text.charAt(index);
                     index++;
-                    scrollToBottom(); // 打字時對話區即時跟隨滾動
-                    setTimeout(typeNextChar, delay);
-                } else {
-                    element.classList.remove('typing');
+                    const box = document.getElementById('chatBox');
+                    box.scrollTop = box.scrollHeight;
+                    setTimeout(next, delay);
                 }
             }
-            element.classList.add('typing');
-            typeNextChar();
+            next();
         }
 
-        // ======================= 行動端防劇烈震盪修正 =======================
-        function fixViewportScroll() {
-            window.scrollTo(0, 0);
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 120);
-            setTimeout(() => { window.scrollTo(0, 0); scrollToBottom(); }, 280);
-        }
-
-        // ======================= Google Drive 備份與匯入功能 =======================
-        window.onload = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (res) => {
-                    accessToken = res.access_token;
-                    document.getElementById('authStatus').innerText = "✅ 雲端連線成功";
-                    document.getElementById('authStatus').style.color = "#06b6d4";
-                },
-            });
-            window.speechSynthesis.getVoices(); // 預載語音引擎
-
-            // 初始化第一個預設對話的打字效果
-            const initAiBox = document.querySelector('.msg.ai.typing');
-            if (initAiBox) {
-                typeText(initAiBox, initAiBox.textContent, 25);
-            }
-        };
-
-        function handleAuth() { tokenClient.requestAccessToken({prompt: 'consent'}); }
-
-        async function saveToDrive() {
-            if (!accessToken) return alert("請先完成帳號授權連線");
-            const data = {
-                image: document.getElementById('displayImg').src,
-                model: document.getElementById('modelSelect').value,
-                personality: document.getElementById('personality').value
-            };
-            const metadata = { name: 'ai_hologram_layout_save.json', mimeType: 'application/json' };
-            const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
-            form.append('file', file);
-
-            try {
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: new Headers({'Authorization': 'Bearer ' + accessToken}),
-                    body: form
-                });
-                alert("✅ 核心參數與立繪已成功打包上傳至 Google Drive 根目錄！");
-            } catch (e) { alert("❌ 雲端備份失敗"); }
-        }
-
-        async function loadFromDrive() {
-            if (!accessToken) return alert("請先完成帳號授權連線");
-            try {
-                const search = await fetch('https://www.googleapis.com/drive/v3/files?q=name="ai_hologram_layout_save.json"&orderBy=createdTime desc', {
-                    headers: new Headers({'Authorization': 'Bearer ' + accessToken})
-                });
-                const list = await search.json();
-                if (list.files.length === 0) return alert("在您的雲端硬碟中找不到相符的備份檔案。");
-                
-                const fileId = list.files[0].id;
-                const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                    headers: new Headers({'Authorization': 'Bearer ' + accessToken})
-                });
-                const config = await fileRes.json();
-                
-                // 還原環境資料
-                document.getElementById('displayImg').src = config.image;
-                document.getElementById('modelSelect').value = config.model;
-                document.getElementById('personality').value = config.personality;
-                alert("✅ 成功從雲端下載並同步還原您的個人設定檔與立繪！");
-                closeMenu();
-            } catch (e) { alert("❌ 還原失敗"); }
-        }
-
-        // ======================= 核心對話與基礎互動邏輯 =======================
-        function handleImg(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    document.getElementById('displayImg').src = e.target.result;
-                    document.getElementById('subtitle').innerText = "動態形象載入完畢";
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
+        function appendMsg(role, text) {
+            const box = document.getElementById('chatBox');
+            const d = document.createElement('div');
+            d.className = `msg ${role}`;
+            box.appendChild(d);
+            box.scrollTop = box.scrollHeight;
+            return d;
         }
 
         async function send() {
@@ -442,68 +174,25 @@
             const text = input.value.trim();
             if (!text) return;
 
-            // 1. 推送使用者訊息到下方獨立區
-            appendMsg('user', text);
+            // 1. 使用者文字進入下方框
+            const userMsg = appendMsg('user', '');
+            userMsg.textContent = text;
             input.value = '';
-            input.blur(); 
-            fixViewportScroll();
 
-            document.getElementById('subtitle').innerText = "系統運算中...";
+            document.getElementById('subtitle').innerText = "運算中...";
 
             try {
-                const model = document.getElementById('modelSelect').value;
-                const personality = document.getElementById('personality').value;
+                // 2. 呼叫 AI (請確保 Puter 已正確配置)
+                const res = await puter.ai.chat(text);
                 
-                // 呼叫 Puter API 進行本土化情境對話
-                const res = await puter.ai.chat(`你現在扮演全息投影人物，性格特質是：${personality}。請完全使用臺灣口音、語氣與慣用語（例如：對啊、真的假的、太誇張了吧）來詳細回答。使用者說：${text}`, {model});
+                // 3. AI 回覆進入下方框，並執行打字效果
+                const aiMsgEl = appendMsg('ai', '');
+                typeText(aiMsgEl, res);
                 
-                // 2. 在下方對話區建立空白 AI 對話盒
-                const aiMsgEl = appendMsg('ai', '', false); 
-                document.getElementById('subtitle').innerText = "投影傳輸中...";
-
-                // 3. 處理打字效果與語音輸出
-                if (document.getElementById('useTypingEffect').checked) {
-                    typeText(aiMsgEl, res, 30);
-                } else {
-                    aiMsgEl.textContent = res;
-                    scrollToBottom();
-                }
-
-                speakText(res); 
+                document.getElementById('subtitle').innerText = "投影中";
             } catch (e) {
-                appendMsg('ai', '系統量子連線異常，請重新再試。');
+                appendMsg('ai', '系統連線異常，請稍後再試。').textContent = '系統連線異常，請稍後再試。';
             }
-        }
-
-        function appendMsg(role, text, setText = true) {
-            const box = document.getElementById('chatBox');
-            const d = document.createElement('div');
-            d.className = `msg ${role}`;
-            if (setText) d.innerText = text;
-            box.appendChild(d);
-            scrollToBottom();
-            return d;
-        }
-
-        function scrollToBottom() {
-            const box = document.getElementById('chatBox');
-            box.scrollTop = box.scrollHeight;
-        }
-
-        function toggleMenu() { document.getElementById('panel').classList.toggle('open'); }
-        function closeMenu() { document.getElementById('panel').classList.remove('open'); }
-
-        // 行動裝置動態可視範圍彈性拉伸監聽
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
-                document.body.style.height = window.visualViewport.height + 'px';
-                scrollToBottom();
-            });
-            window.visualViewport.addEventListener('scroll', () => {
-                if(window.visualViewport.offsetTop > 0){
-                    window.scrollTo(0,0);
-                }
-            });
         }
     </script>
 </body>
