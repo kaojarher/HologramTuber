@@ -401,6 +401,27 @@
             }
         }
 
+        // 將 puter 回傳值統一萃取為純字串，並移除 markdown 標記
+        function extractText(res) {
+            let raw = '';
+            if (typeof res === 'string') {
+                raw = res;
+            } else if (res && typeof res === 'object') {
+                // puter 有時回傳 {message:{content:...}} 或直接 {content:...}
+                raw = res?.message?.content
+                    ?? res?.content
+                    ?? res?.text
+                    ?? JSON.stringify(res);
+            }
+            // 移除 **粗體**、*斜體*、# 標題、`code` 等 markdown
+            return raw
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/#{1,6}\s?/g, '')
+                .replace(/`(.+?)`/g, '$1')
+                .trim();
+        }
+
         async function send() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -409,22 +430,32 @@
             appendMsg('user', text);
             input.value = '';
             
-            // 當發送完成，讓輸入框主動失焦解除鍵盤，並執行強效修正
             input.blur(); 
             fixViewportScroll();
 
+            // 字幕只顯示簡短狀態，不顯示全文
             document.getElementById('subtitle').innerText = "思考中...";
 
             try {
                 const model = document.getElementById('modelSelect').value;
                 const personality = document.getElementById('personality').value;
-                const res = await puter.ai.chat(`你是${personality}。請用臺灣常用的語氣回答。使用者說：${text}`, {model});
-                
-                typewriterMsg('ai', res);
-                document.getElementById('subtitle').innerText = res;
-                speakText(res); 
+                const raw = await puter.ai.chat(
+                    `你是${personality}。請用臺灣常用的語氣回答，禁止使用 markdown 格式（不可用 ** * # ` 等符號）。使用者說：${text}`,
+                    {model}
+                );
+                const resText = extractText(raw);
+
+                // 打字機顯示在對話區
+                typewriterMsg('ai', resText);
+
+                // 字幕只顯示前20字，不擋立繪
+                const shortSubtitle = resText.length > 20 ? resText.slice(0, 20) + '…' : resText;
+                document.getElementById('subtitle').innerText = shortSubtitle;
+
+                speakText(resText); 
             } catch (e) {
                 appendMsg('ai', '連線異常，請稍後再試。');
+                document.getElementById('subtitle').innerText = '連線異常';
             }
         }
 
@@ -438,13 +469,12 @@
             return d;
         }
 
-        // 打字機效果：逐字顯示 AI 回應
+        // 打字機效果：逐字顯示，帶閃爍游標
         function typewriterMsg(role, fullText) {
             const box = document.getElementById('chatBox');
             const d = document.createElement('div');
             d.className = `msg ${role}`;
-            
-            // 建立游標元素
+
             const cursor = document.createElement('span');
             cursor.className = 'typing-cursor';
             d.appendChild(cursor);
@@ -452,21 +482,19 @@
             scrollToBottom();
 
             let i = 0;
-            const speed = 30; // 每字間隔ms，可調整快慢
-            
-            function type() {
+            const speed = 28;
+
+            (function type() {
                 if (i < fullText.length) {
-                    // 在游標前插入文字節點
                     d.insertBefore(document.createTextNode(fullText[i]), cursor);
                     i++;
                     scrollToBottom();
                     setTimeout(type, speed);
                 } else {
-                    // 打完移除游標
                     cursor.remove();
                 }
-            }
-            type();
+            })();
+
             return d;
         }
 
