@@ -268,19 +268,13 @@
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         let tokenClient;
         let accessToken = null;
-        let isPuterReady = false;
-
-        // ======================= 確保 Puter SDK 初始化完成 =======================
-        puter.ready().then(() => {
-            isPuterReady = true;
+        // ======================= Puter AI 無需等待 ready，直接可用 =======================
+        window.addEventListener('DOMContentLoaded', () => {
             const box = document.getElementById('chatBox');
             box.innerHTML = '';
             const initMsg = appendMsg('ai', '', false);
-            typeText(initMsg, "您好！全息同步核心已成功連接至 Puter AI。現在所有的長篇回覆都會乖乖留在此處，並能自由滾動，絕對不會再遮擋立繪囉！試著跟我聊聊吧！", 20);
+            typeText(initMsg, "您好！全息同步核心啟動完成。Puter AI 已就緒，試著跟我聊聊吧！", 20);
             document.getElementById('subtitle').innerText = "全息投影就緒，請對話。";
-        }).catch(err => {
-            console.error("Puter 初始化失敗:", err);
-            document.getElementById('subtitle').innerText = "核心連線異常";
         });
 
         // ======================= 臺灣語音輸入 (STT) =======================
@@ -438,8 +432,6 @@
         }
 
         async function send() {
-            if (!isPuterReady) return alert("Puter AI 核心尚未準備就緒，請稍候。");
-            
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             if (!text) return;
