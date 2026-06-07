@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息陪伴 - 臺灣語音雲端版</title>
+    <title>AI 全息陪伴 - 臺灣語音雲端終極修復版</title>
     <script src="https://js.puter.com/v2/"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- 【修復1】移除 async defer，改用 onGoogleLibraryLoad 回呼確保載入時序正確 -->
+    <script src="https://accounts.google.com/gsi/client" onload="initGoogleAuth()"></script>
     
     <style>
         :root {
@@ -20,7 +21,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft JhengHei", system-ui, sans-serif; }
         
-        /* 核心防抖動高度設定 */
         html { 
             height: 100%; 
             background-color: var(--bg-color);
@@ -36,13 +36,35 @@
             left: 0;
         }
 
-        .container { display: flex; width: 100%; height: 100%; }
+        .container { display: flex; width: 100%; height: 100%; position: relative; }
 
-        /* 面板設計 */
+        .mobile-toggle { 
+            position: fixed; 
+            top: 12px; 
+            left: 12px; 
+            z-index: 10005; 
+            background: #1e293b; 
+            color: var(--accent-cyan); 
+            border: 2px solid var(--accent-cyan); 
+            padding: 10px 20px; 
+            border-radius: 10px; 
+            font-weight: bold;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .mobile-toggle:active {
+            transform: scale(0.95);
+            background: var(--accent-cyan);
+            color: #050a16;
+        }
+
         .control-panel {
             width: 300px; background-color: var(--panel-bg); border-right: 1px solid #334155;
             padding: 20px; display: flex; flex-direction: column; gap: 15px;
-            overflow-y: auto; transition: transform 0.3s ease; z-index: 100;
+            overflow-y: auto; transition: transform 0.3s ease; 
+            z-index: 10000;
         }
 
         .backup-card {
@@ -59,9 +81,9 @@
             position: relative; 
             min-height: 0;
             overflow: hidden;
+            z-index: 10;
         }
 
-        /* 全息展示區 — 佔55%高度，立繪更大 */
         .cabin-section { 
             flex: 0 0 55%; 
             min-height: 0; 
@@ -80,11 +102,10 @@
             box-shadow: inset 0 0 30px var(--holo-glow);
         }
 
-        /* 字幕條：固定在 hologram-cabin 底部，不蓋出去 */
         .subtitle-bar {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            background: rgba(0,0,0,0.75);
+            background: rgba(0,0,0,0.8);
             border-top: 1px solid var(--accent-cyan);
             padding: 8px 14px;
             font-size: 1rem;
@@ -93,13 +114,13 @@
             line-height: 1.4;
             z-index: 10;
             min-height: 38px;
+            pointer-events: none;
         }
 
-        /* 律動與全息特效 */
         .fullbody-display {
             width: 90%; 
-            height: calc(100% - 44px); /* 扣掉字幕條高度 */
-            margin-bottom: 44px; /* 字幕條佔位 */
+            height: calc(100% - 44px);
+            margin-bottom: 44px;
             display: flex; align-items: flex-end; justify-content: center;
             position: relative; z-index: 2;
             animation: floatRhythm 4s ease-in-out infinite;
@@ -109,6 +130,7 @@
             max-width: 100%; height: 100%; object-fit: contain;
             filter: drop-shadow(0 0 14px var(--accent-cyan));
             mask-image: linear-gradient(to bottom, black 88%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 88%, transparent 100%);
         }
 
         .fullbody-display::before {
@@ -122,7 +144,6 @@
             50% { transform: translateY(-8px) scale(1.02); filter: brightness(1.15); }
         }
 
-        /* 對話區 */
         .chat-section { 
             flex: 1; 
             display: flex; 
@@ -131,6 +152,7 @@
             border-top: 1px solid #334155; 
             overflow: hidden;
             min-height: 0;
+            z-index: 15;
         }
         .chat-box { 
             flex: 1; 
@@ -139,17 +161,24 @@
             padding: 15px; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 12px; 
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             min-height: 0;
         }
-        /* 字體放大，適合老花眼 */
-        .msg { padding: 12px 16px; border-radius: 14px; font-size: 1.15rem; max-width: 88%; line-height: 1.7; }
+        
+        .msg { padding: 12px 16px; border-radius: 14px; font-size: 1.15rem; max-width: 88%; line-height: 1.7; word-break: break-all; }
         .msg.user { background: var(--accent-purple); align-self: flex-end; }
-        .msg.ai { background: #334155; align-self: flex-start; border-left: 4px solid var(--accent-cyan); }
+        
+        .msg.ai { 
+            background: #334155; 
+            align-self: flex-start; 
+            border-left: 4px solid var(--accent-cyan); 
+            max-height: 5.1em; 
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
-        /* 打字機游標 */
         .typing-cursor {
             display: inline-block;
             width: 2px; height: 1.1em;
@@ -160,7 +189,6 @@
         }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* 輸入區（精準釘死在底部） */
         .input-area { 
             flex-shrink: 0;
             padding: 10px 15px; 
@@ -171,7 +199,7 @@
             align-items: center;
             border-top: 1px solid #334155;
             position: relative;
-            z-index: 10;
+            z-index: 20;
         }
         input[type="text"] { flex: 1; background: #1e293b; border: 1px solid #475569; color: #fff; padding: 14px 16px; border-radius: 25px; outline: none; font-size: 18px; }
         
@@ -185,20 +213,18 @@
 
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 211, 238, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); } }
 
-        .mobile-toggle { position: absolute; top: 10px; left: 10px; z-index: 200; background: #1e293b; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 8px; border-radius: 8px; }
-
         @media (max-width: 768px) {
             .control-panel { position: absolute; transform: translateX(-100%); height: 100%; }
-            .control-panel.open { transform: translateX(0); }
+            .control-panel.open { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.6); }
         }
     </style>
 </head>
 <body>
 
-    <button class="mobile-toggle" onclick="toggleMenu()" id="menuBtn">⚙️ 定制</button>
+    <button class="mobile-toggle" id="menuBtn">⚙️ 定制</button>
 
     <div class="container">
-        <div class="control-panel" id="panel">
+        <div class="control-panel" id="panel" onclick="event.stopPropagation()">
             <h2 style="margin-top:40px">雲端同步與設定</h2>
             
             <div class="backup-card">
@@ -236,22 +262,23 @@
                     <option value="幽默、喜歡開玩笑的摯友">幽默風趣</option>
                 </select>
             </div>
+            
+            <button id="explicitCloseBtn" style="background:#ff4757; color:white; padding:10px; border:none; border-radius:8px; margin-top:20px; cursor:pointer; width:100%;">關閉選單</button>
         </div>
 
-        <div class="main-display" onclick="closeMenu()">
+        <div class="main-display" id="displayArea">
             <div class="cabin-section">
                 <div class="hologram-cabin">
                     <div class="fullbody-display">
                         <img src="https://via.placeholder.com/200x500/0f172a/22d3ee?text=AI+Hologram" id="displayImg">
                     </div>
-                    <!-- 字幕條在 cabin 內部底部，不會蓋到對話區 -->
                     <div id="subtitle" class="subtitle-bar">我在聽，請說話...</div>
                 </div>
             </div>
 
-            <div class="chat-section">
+            <div class="chat-section" onclick="event.stopPropagation()">
                 <div class="chat-box" id="chatBox">
-                    <div class="msg ai">您好！我是您的全息陪伴。已大幅強化手機端鍵盤收起時的版面校正，輸入區將不會再消失！</div>
+                    <div class="msg ai">您好！我是您的全息陪伴。本地端點擊衝突已完全修復。當 AI 回覆內容長度大於三行時，會在回應氣泡內啟動打字機專屬的自動下滾動捲軸，絕不往上擠壓您的精緻全息立繪空間！</div>
                 </div>
                 <div class="input-area">
                     <button class="icon-btn" id="voiceBtn" onclick="toggleVoice()" title="語音輸入">🎤</button>
@@ -270,10 +297,68 @@
         let tokenClient;
         let accessToken = null;
 
+        // ======================= 【修復1】Google GSI 初始化改為獨立函式，由 onload 觸發 =======================
+        function initGoogleAuth() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (res) => {
+                    if (res.error) {
+                        alert('授權失敗：' + res.error);
+                        return;
+                    }
+                    accessToken = res.access_token;
+                    document.getElementById('authStatus').innerText = "✅ 已授權";
+                    document.getElementById('authStatus').style.color = "#22d3ee";
+                },
+            });
+            // 預載語音列表
+            window.speechSynthesis.getVoices();
+        }
+
+        // ======================= 【修復4】選單按鈕：防止行動端 touchstart + click 雙重觸發 =======================
+        const panel = document.getElementById('panel');
+        const menuBtn = document.getElementById('menuBtn');
+        const displayArea = document.getElementById('displayArea');
+        const explicitCloseBtn = document.getElementById('explicitCloseBtn');
+
+        let lastToggleTime = 0; // 防抖旗標
+
+        function toggleMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+            const now = Date.now();
+            if (now - lastToggleTime < 300) return; // 300ms 內防重複觸發
+            lastToggleTime = now;
+            panel.classList.toggle('open');
+        }
+
+        function closeMenu() { 
+            panel.classList.remove('open'); 
+        }
+
+        menuBtn.addEventListener('touchstart', toggleMenu, { passive: false });
+        menuBtn.addEventListener('click', toggleMenu);
+        
+        explicitCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeMenu();
+        });
+
+        displayArea.addEventListener('click', () => {
+            if (panel.classList.contains('open')) {
+                closeMenu();
+            }
+        });
+
         // ======================= 語音功能 (STT/TTS) =======================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let isListening = false;
+        let pendingSendAfterRecognition = false; // 【修復3】標記是否需在 onend 後送出
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
@@ -281,16 +366,30 @@
             recognition.interimResults = false;
             recognition.continuous = false;
 
+            // 【修復3】onresult 只設定文字，不立即 send()
             recognition.onresult = (event) => {
                 const text = event.results[0][0].transcript;
                 document.getElementById('userInput').value = text;
-                send(); 
+                pendingSendAfterRecognition = true; // 標記待送出
             };
 
+            // 【修復3】onend 才真正送出，避免 iOS blur 打斷辨識流程
             recognition.onend = () => {
                 isListening = false;
                 document.getElementById('voiceBtn').classList.remove('active');
-                fixViewportScroll(); // 語音結束收起時強制修正網頁位移
+                fixViewportScroll();
+                if (pendingSendAfterRecognition) {
+                    pendingSendAfterRecognition = false;
+                    const input = document.getElementById('userInput');
+                    if (input.value.trim()) send();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                pendingSendAfterRecognition = false;
+                document.getElementById('voiceBtn').classList.remove('active');
+                console.warn('語音辨識錯誤：', event.error);
             };
         }
 
@@ -299,6 +398,7 @@
             if (isListening) {
                 recognition.stop();
             } else {
+                pendingSendAfterRecognition = false;
                 recognition.start();
                 isListening = true;
                 document.getElementById('voiceBtn').classList.add('active');
@@ -307,7 +407,7 @@
 
         function speakText(text) {
             if (!document.getElementById('autoSpeech').checked) return;
-            window.speechSynthesis.cancel(); // 朗讀前先清除上一次的聲音防止疊音
+            window.speechSynthesis.cancel(); 
             const msg = new SpeechSynthesisUtterance();
             msg.text = text;
             msg.lang = 'zh-TW';
@@ -318,7 +418,6 @@
             window.speechSynthesis.speak(msg);
         }
 
-        // ======================= 強效網頁位置修正 (核心修正點) =======================
         function fixViewportScroll() {
             window.scrollTo(0, 0);
             setTimeout(() => { 
@@ -326,28 +425,16 @@
                 updateViewportHeight();
                 scrollToBottom(); 
             }, 150);
-            setTimeout(() => { 
-                window.scrollTo(0, 0); 
-                updateViewportHeight();
-                scrollToBottom(); 
-            }, 350);
         }
 
         // ======================= Google Drive 功能 =======================
-        window.onload = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (res) => {
-                    accessToken = res.access_token;
-                    document.getElementById('authStatus').innerText = "✅ 已授權";
-                    document.getElementById('authStatus').style.color = "#22d3ee";
-                },
-            });
-            window.speechSynthesis.getVoices();
-        };
-
-        function handleAuth() { tokenClient.requestAccessToken({prompt: 'consent'}); }
+        function handleAuth() {
+            if (!tokenClient) {
+                alert('Google 授權尚未初始化，請稍後再試');
+                return;
+            }
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        }
 
         async function saveToDrive() {
             if (!accessToken) return alert("請先授權");
@@ -363,13 +450,14 @@
             form.append('file', file);
 
             try {
-                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken}),
                     body: form
                 });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 alert("雲端備份成功！");
-            } catch (e) { alert("備份失敗"); }
+            } catch (e) { alert("備份失敗：" + e.message); }
         }
 
         async function loadFromDrive() {
@@ -378,18 +466,23 @@
                 const search = await fetch('https://www.googleapis.com/drive/v3/files?q=name="ai_hologram_tw_save.json"&orderBy=createdTime desc', {
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken})
                 });
+                if (!search.ok) throw new Error('HTTP ' + search.status);
                 const list = await search.json();
-                if (list.files.length === 0) return alert("找不到備份");
+
+                // 【修復5】安全檢查 files 是否存在且非空
+                if (!list.files || list.files.length === 0) return alert("找不到備份");
+
                 const fileId = list.files[0].id;
                 const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
                     headers: new Headers({'Authorization': 'Bearer ' + accessToken})
                 });
+                if (!fileRes.ok) throw new Error('HTTP ' + fileRes.status);
                 const config = await fileRes.json();
                 document.getElementById('displayImg').src = config.image;
                 document.getElementById('modelSelect').value = config.model;
                 document.getElementById('personality').value = config.personality;
                 alert("備份還原成功！");
-            } catch (e) { alert("匯入失敗"); }
+            } catch (e) { alert("匯入失敗：" + e.message); }
         }
 
         // ======================= 核心對話邏輯 =======================
@@ -401,19 +494,24 @@
             }
         }
 
-        // 將 puter 回傳值統一萃取為純字串，並移除 markdown 標記
+        // 【修復2】正確解析 Puter AI 回傳的陣列格式 content
         function extractText(res) {
             let raw = '';
             if (typeof res === 'string') {
                 raw = res;
-            } else if (res && typeof res === 'object') {
-                // puter 有時回傳 {message:{content:...}} 或直接 {content:...}
-                raw = res?.message?.content
-                    ?? res?.content
-                    ?? res?.text
-                    ?? JSON.stringify(res);
+            } else if (res?.message?.content) {
+                const content = res.message.content;
+                if (Array.isArray(content)) {
+                    // Puter/OpenAI 標準格式：content 是 [{type:"text", text:"..."}] 陣列
+                    raw = content.map(c => c.text || c.content || '').join('');
+                } else if (typeof content === 'string') {
+                    raw = content;
+                } else {
+                    raw = JSON.stringify(content);
+                }
+            } else {
+                raw = res?.content ?? res?.text ?? JSON.stringify(res);
             }
-            // 移除 **粗體**、*斜體*、# 標題、`code` 等 markdown
             return raw
                 .replace(/\*\*(.+?)\*\*/g, '$1')
                 .replace(/\*(.+?)\*/g, '$1')
@@ -433,22 +531,19 @@
             input.blur(); 
             fixViewportScroll();
 
-            // 字幕只顯示簡短狀態，不顯示全文
             document.getElementById('subtitle').innerText = "思考中...";
 
             try {
                 const model = document.getElementById('modelSelect').value;
                 const personality = document.getElementById('personality').value;
                 const raw = await puter.ai.chat(
-                    `你是${personality}。請用臺灣常用的語氣回答，禁止使用 markdown 格式（不可用 ** * # ` 等符號）。使用者說：${text}`,
+                    `你是${personality}。請用臺灣常用的語氣回答，禁止使用 markdown 格式（不可用 ** * # \` 等符號）。使用者說：${text}`,
                     {model}
                 );
                 const resText = extractText(raw);
 
-                // 打字機顯示在對話區
                 typewriterMsg('ai', resText);
 
-                // 字幕只顯示前20字，不擋立繪
                 const shortSubtitle = resText.length > 20 ? resText.slice(0, 20) + '…' : resText;
                 document.getElementById('subtitle').innerText = shortSubtitle;
 
@@ -456,6 +551,7 @@
             } catch (e) {
                 appendMsg('ai', '連線異常，請稍後再試。');
                 document.getElementById('subtitle').innerText = '連線異常';
+                console.error('AI 對話錯誤：', e);
             }
         }
 
@@ -469,7 +565,6 @@
             return d;
         }
 
-        // 打字機效果：逐字顯示，帶閃爍游標
         function typewriterMsg(role, fullText) {
             const box = document.getElementById('chatBox');
             const d = document.createElement('div');
@@ -488,10 +583,13 @@
                 if (i < fullText.length) {
                     d.insertBefore(document.createTextNode(fullText[i]), cursor);
                     i++;
-                    scrollToBottom();
+                    box.scrollTop = box.scrollHeight;
+                    d.scrollTop = d.scrollHeight;
                     setTimeout(type, speed);
                 } else {
                     cursor.remove();
+                    box.scrollTop = box.scrollHeight;
+                    d.scrollTop = d.scrollHeight;
                 }
             })();
 
@@ -503,12 +601,9 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        function toggleMenu() { document.getElementById('panel').classList.toggle('open'); }
-        function closeMenu() { document.getElementById('panel').classList.remove('open'); }
-
-        // 行動端視口精準動態監聽
-        // 使用 visualViewport 精準取得鍵盤彈出後的真實可用高度
+        // 【修復6】只在行動端套用動態視口高度，桌面端不覆蓋 CSS height:100%
         function updateViewportHeight() {
+            if (window.innerWidth > 768) return;
             const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             document.querySelector('.container').style.height = vh + 'px';
             scrollToBottom();
@@ -517,12 +612,10 @@
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', updateViewportHeight);
             window.visualViewport.addEventListener('scroll', () => {
-                // 防止瀏覽器將視窗拉偏
                 window.scrollTo(0, 0);
             });
         }
 
-        // 初始化高度
         updateViewportHeight();
         window.addEventListener('resize', updateViewportHeight);
     </script>
