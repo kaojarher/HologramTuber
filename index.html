@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 全息陪伴 - 臺灣語音終極修正版</title>
+    <title>AI 全息陪伴 - 終極全功能修正版</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
@@ -38,7 +38,7 @@
             overflow-y: auto; transition: transform 0.3s ease; z-index: 100;
         }
 
-        h2, h3 { color: var(--accent-cyan); border-bottom: 1px solid #374151; padding-bottom: 5px; font-size: 1rem; }
+        h2, h3 { color: var(--accent-cyan); border-bottom: 1px solid #374151; padding-bottom: 5px; font-size: 1rem; margin-top: 10px; }
 
         .backup-card {
             background: linear-gradient(145deg, #1f2937, #111827);
@@ -50,11 +50,11 @@
         .btn:hover { background: #374151; }
         .btn-primary { background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); border: none; font-weight: bold; color: #fff; }
 
-        /* ======================= 主顯示區 (垂直佈局，絕不溢出) ======================= */
+        /* ======================= 主顯示區 (上下嚴格分層) ======================= */
         .main-display { 
             flex: 1; 
             display: flex; 
-            flex-direction: column; /* 上下分層 */
+            flex-direction: column; /* 垂直排列：上方立繪，下方對話 */
             background: radial-gradient(circle at center, #111827 0%, #030712 100%); 
             position: relative; 
             height: 100%; 
@@ -63,13 +63,13 @@
 
         /* 上方：大型立繪展示區 */
         .cabin-section { 
-            flex: 1; /* 自動分配剩餘空間，讓立繪儘可能大 */
+            flex: 1; /* 自動撐滿上方剩餘空間 */
             display: flex; 
             align-items: center; 
             justify-content: center; 
             padding: 15px; 
             position: relative; 
-            min-height: 0; /* 關鍵防溢出 */
+            min-height: 0; /* 防止子元素溢出擠壓佈局 */
         }
         
         .hologram-cabin {
@@ -82,6 +82,7 @@
             box-shadow: inset 0 0 40px var(--holo-glow);
         }
 
+        /* 貓耳娘形象呼吸與浮動律動 */
         .fullbody-display {
             width: 100%; height: 90%; 
             display: flex; align-items: flex-end; justify-content: center;
@@ -96,11 +97,19 @@
             -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
         }
 
+        /* 全息網格特效線 */
+        .fullbody-display::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.08) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 3;
+        }
+
         @keyframes floatRhythm {
             0%, 100% { transform: translateY(0); filter: brightness(1); }
             50% { transform: translateY(-10px); filter: brightness(1.15); }
         }
 
+        /* 艙體內部的短動態字幕提示 */
         #subtitle {
             position: absolute; bottom: 15px; background: rgba(3, 7, 18, 0.75); 
             padding: 4px 14px; border-radius: 12px; font-size: 0.75rem; 
@@ -108,9 +117,9 @@
             max-width: 85%; text-align: center; z-index: 5; pointer-events: none;
         }
 
-        /* ======================= 下方：獨立對話工作區 ======================= */
+        /* ======================= 下方：獨立對話工作區 (文字嚴格歸位) ======================= */
         .chat-section { 
-            flex: 0 0 35%; /* 固定佔用螢幕總高度的 35% */
+            flex: 0 0 35%; /* 鎖定佔用螢幕總高度的 35% */
             min-height: 220px; 
             display: flex; flex-direction: column; 
             background: rgba(17, 24, 39, 0.98); 
@@ -119,6 +128,7 @@
             z-index: 10; 
         }
 
+        /* 對話歷史紀錄容器 */
         .chat-box { 
             flex: 1; 
             overflow-y: auto; 
@@ -130,11 +140,12 @@
         }
 
         .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; max-width: 85%; line-height: 1.5; word-break: break-all; }
-        .msg.user { background: var(--accent-purple); align-self: flex-end; color: #fff; }
+        .msg.user { background: var(--accent-purple); align-self: flex-end; color: #fff; box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3); }
         .msg.ai { 
             background: #253047; align-self: flex-start; 
             border-left: 4px solid var(--accent-cyan);
             color: var(--text-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .typing { white-space: pre-wrap; }
@@ -233,12 +244,12 @@
                         <img src="https://via.placeholder.com/350x750/111827/06b6d4?text=AI+Hologram" id="displayImg">
                     </div>
                 </div>
-                <div id="subtitle">全息投影就緒，請對話。</div>
+                <div id="subtitle">全息系統連線中...</div>
             </div>
 
             <div class="chat-section">
                 <div class="chat-box" id="chatBox">
-                    <div class="msg ai typing">您好！所有的功能已全數修復。我的回覆會老老實實顯示在這個下方框中，不會再遮擋上方的精美立繪。請試試用語音或文字跟我聊聊吧！</div>
+                    <div class="msg ai typing">全息傳輸核心初始化中...</div>
                 </div>
                 
                 <div class="input-area">
@@ -257,6 +268,21 @@
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         let tokenClient;
         let accessToken = null;
+        let isPuterReady = false;
+
+        // ======================= 確保 Puter SDK 初始化完成 =======================
+        puter.ready().then(() => {
+            isPuterReady = true;
+            console.log("Puter SDK 載入成功");
+            const box = document.getElementById('chatBox');
+            box.innerHTML = '';
+            const initMsg = appendMsg('ai', '', false);
+            typeText(initMsg, "您好！全息同步核心已成功連接至 Puter AI。現在所有的長篇回覆（例如保養眼睛的教學）都會乖乖留在此處，並能自由滾動，絕對不會再遮擋立繪囉！試著跟我聊聊吧！", 20);
+            document.getElementById('subtitle').innerText = "全息投影就緒，請對話。";
+        }).catch(err => {
+            console.error("Puter 初始化失敗:", err);
+            document.getElementById('subtitle').innerText = "核心連線異常";
+        });
 
         // ======================= 臺灣語音輸入 (STT) =======================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -338,21 +364,18 @@
 
         // ======================= Google Drive 備份還原流程 =======================
         window.onload = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: (res) => {
-                    accessToken = res.access_token;
-                    document.getElementById('authStatus').innerText = "✅ 雲端連線成功";
-                    document.getElementById('authStatus').style.color = "#06b6d4";
-                },
-            });
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: (res) => {
+                        accessToken = res.access_token;
+                        document.getElementById('authStatus').innerText = "✅ 雲端連線成功";
+                        document.getElementById('authStatus').style.color = "#06b6d4";
+                    },
+                });
+            } catch(e) { console.log("Google SDK 等待中"); }
             window.speechSynthesis.getVoices(); 
-
-            const initAiBox = document.querySelector('.msg.ai.typing');
-            if (initAiBox) {
-                typeText(initAiBox, initAiBox.textContent, 20);
-            }
         };
 
         function handleAuth() { tokenClient.requestAccessToken({prompt: 'consent'}); }
@@ -416,6 +439,8 @@
         }
 
         async function send() {
+            if (!isPuterReady) return alert("Puter AI 核心尚未準備就緒，請稍候。");
+            
             const input = document.getElementById('userInput');
             const text = input.value.trim();
             if (!text) return;
@@ -433,24 +458,26 @@
                 const personality = document.getElementById('personality').value;
                 
                 // 呼叫 Puter AI 進行對話
-                const res = await puter.ai.chat(`你現在是全息投影人物，性格特質是：${personality}。請用臺灣口音與語氣詳細回答。使用者說：${text}`, {model});
+                const res = await puter.ai.chat(`你現在是全息投影人物，性格特質是：${personality}。請完全使用繁體中文、臺灣口音與語氣詳細回答。使用者說：${text}`, {model});
                 
-                // 2. 在下方建立 AI 的空白訊息框 (修正處：第 3 個參數設為 false 延遲填入文字)
+                // 2. 在下方建立 AI 的空白訊息框
                 const aiMsgEl = appendMsg('ai', '', false); 
                 document.getElementById('subtitle').innerText = "投影傳輸中...";
 
                 // 3. 處理打字效果與語音
                 if (document.getElementById('useTypingEffect').checked) {
-                    typeText(aiMsgEl, res, 30);
+                    typeText(aiMsgEl, res.toString(), 30);
                 } else {
-                    aiMsgEl.textContent = res;
+                    aiMsgEl.textContent = res.toString();
                     scrollToBottom();
                 }
 
-                speakText(res); 
+                speakText(res.toString()); 
             } catch (e) {
+                console.error(e);
                 const errEl = appendMsg('ai', '', false);
-                errEl.textContent = '系統量子連線異常，請重新再試。';
+                errEl.textContent = '系統連線異常，請重新再試。';
+                document.getElementById('subtitle').innerText = "傳輸失敗";
             }
         }
 
