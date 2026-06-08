@@ -668,19 +668,47 @@ function closeBatchModal() {
 }
 
 // ==================== SHOW EMOTION ====================
+let emoResetTimer = null;
+let lastMainImg = null; // store main img src before emotion swap
+
 function showEmotion(key) {
     const emo = EMOTIONS.find(e => e.key === key);
     if (!emo) return;
-    const display = document.getElementById('emoDisplay');
-    clearTimeout(emoTimeout);
+    clearTimeout(emoResetTimer);
+
+    const displayImg = document.getElementById('displayImg');
+    const subtitle = document.getElementById('subtitle');
 
     if (emoImages[key]) {
-        display.innerHTML = `<img src="${emoImages[key]}" alt="${emo.label}">`;
+        // Save main img if not already in emotion mode
+        if (!displayImg.dataset.emoMode) {
+            lastMainImg = displayImg.src;
+        }
+        displayImg.dataset.emoMode = '1';
+        displayImg.style.transition = 'opacity 0.25s';
+        displayImg.style.opacity = '0';
+        setTimeout(() => {
+            displayImg.src = emoImages[key];
+            displayImg.style.opacity = '1';
+        }, 220);
+        subtitle.textContent = emo.label;
+        // Reset back to main img after 4 seconds
+        emoResetTimer = setTimeout(() => {
+            displayImg.style.opacity = '0';
+            setTimeout(() => {
+                if (lastMainImg) displayImg.src = lastMainImg;
+                displayImg.style.opacity = '1';
+                delete displayImg.dataset.emoMode;
+                subtitle.textContent = '全息投影就緒，請對話。';
+            }, 220);
+        }, 4000);
     } else {
+        // No image: show emoji in small overlay as fallback
+        const display = document.getElementById('emoDisplay');
         display.innerHTML = `<span class="emo-big">${emo.emoji}</span>`;
+        display.style.opacity = '1';
+        emoResetTimer = setTimeout(() => { display.style.opacity = '0'; }, 3000);
     }
-    display.style.opacity = '1';
-    emoTimeout = setTimeout(() => { display.style.opacity = '0'; }, 3000);
 
     document.getElementById('emoSlot_' + key)?.classList.add('active');
     setTimeout(() => document.getElementById('emoSlot_' + key)?.classList.remove('active'), 600);
