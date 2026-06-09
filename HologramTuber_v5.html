@@ -751,9 +751,24 @@ async function send() {
         const resp = await puter.ai.chat(messages);
 
         let replyText = '';
-        if (resp?.message?.content?.[0]?.text) replyText = resp.message.content[0].text;
-        else if (typeof resp === 'string') replyText = resp;
-        else replyText = JSON.stringify(resp);
+        // Puter format: resp.message.content[0].text
+        if (resp?.message?.content?.[0]?.text)       replyText = resp.message.content[0].text;
+        // Puter simple string
+        else if (typeof resp?.message?.content === 'string') replyText = resp.message.content;
+        // OpenAI format: resp.choices[0].message.content
+        else if (resp?.choices?.[0]?.message?.content) replyText = resp.choices[0].message.content;
+        // OpenAI nested index: resp[0].message.content
+        else if (resp?.[0]?.message?.content)         replyText = resp[0].message.content;
+        // Plain string
+        else if (typeof resp === 'string')             replyText = resp;
+        // Last resort: try to extract "content" field from JSON string
+        else {
+            try {
+                const raw = typeof resp === 'object' ? JSON.stringify(resp) : String(resp);
+                const m = raw.match(/"content"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                replyText = m ? m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : raw;
+            } catch { replyText = String(resp); }
+        }
         replyText = replyText.trim();
 
         chatHistory.push({ role: 'assistant', content: replyText });
